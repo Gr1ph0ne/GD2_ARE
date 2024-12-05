@@ -18,18 +18,18 @@ public class CharacterController : MonoBehaviour
 
     private float _moveLimiter = 0.7f;
     private float _runSpeed = 10.0f;
-    private float _raycastDistance = 1f;
 
     private bool _canMove = true;
 
 
     // Dash
-    public float _dashLength = 50f;
-    public float _dashDuration = 10f;
-    public float _dashCD = 3f;
+    private float _dashLength = 6f;
+    private float _dashDuration = 1f;
+    private float _dashSmallCD = 0.5f;
+    private float _dashLargeCD = 1f;
     private float _timerCD = 0f;
     private int _dashCount = 0;
-    private bool _dashed = false;
+    private bool _canDash = true;
 
     void Start()
     {
@@ -42,9 +42,12 @@ public class CharacterController : MonoBehaviour
         _mouseWorldPosition = Camera.main.ScreenToWorldPoint(_mouseScreenPosition);
         _currentFramePosition = transform.position;
         _nextFramePosition = _currentFramePosition + new Vector2(_horizontal * _runSpeed, _vertical * _runSpeed);
-        if (Input.GetKeyDown(KeyCode.Space) && _dashCount <= 3)
+        if (_canMove)
         {
-            DoDash();
+            if (Input.GetKeyDown(KeyCode.Space) && _canDash && _dashCount <= 2)
+            {
+                DoDash();
+            }
         }
         Debug.Log(_canMove);
         
@@ -55,6 +58,7 @@ public class CharacterController : MonoBehaviour
         Vector2 dashDirection = (_mouseWorldPosition - _currentFramePosition).normalized;
         Vector2 dashTarget = _currentFramePosition + dashDirection * _dashLength;
 
+        StopAllCoroutines();
         Coroutine dashAnimation = StartCoroutine(AnimateDash(dashTarget));
         Coroutine startTimer = StartCoroutine(StartTimer());
     }
@@ -74,13 +78,20 @@ public class CharacterController : MonoBehaviour
     }
     IEnumerator StartTimer()
     {
+        _timerCD = 0;
         _dashCount += 1;
         while (true)
         {
             _timerCD += Time.deltaTime;
-            if (_timerCD >= _dashCD)
+            if (_timerCD <= _dashSmallCD)
+            {
+                _canDash = false;
+            }
+            else _canDash = true;
+            if (_timerCD >= _dashLargeCD)
             {
                 _dashCount = 0;
+                _timerCD = 0;
                 break;
             }
             yield return null;
