@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEngine.RuleTile.TilingRuleOutput;
 
 public class CharacterController : MonoBehaviour
 {
@@ -22,10 +24,12 @@ public class CharacterController : MonoBehaviour
 
 
     // Dash
-    private float _dashLength = 5f;
-    private float _dashDuration = 1f;
-    private float _dashSmallCD = 1f;
-    private float _dashLargeCD = 3f;
+    public float _dashLength = 50f;
+    public float _dashDuration = 10f;
+    public float _dashCD = 3f;
+    private float _timerCD = 0f;
+    private int _dashCount = 0;
+    private bool _dashed = false;
 
     void Start()
     {
@@ -36,25 +40,66 @@ public class CharacterController : MonoBehaviour
     {
         _mouseScreenPosition = Input.mousePosition;
         _mouseWorldPosition = Camera.main.ScreenToWorldPoint(_mouseScreenPosition);
-        if (Input.GetKeyDown(KeyCode.Space))
+        _currentFramePosition = transform.position;
+        _nextFramePosition = _currentFramePosition + new Vector2(_horizontal * _runSpeed, _vertical * _runSpeed);
+        if (Input.GetKeyDown(KeyCode.Space) && _dashCount <= 3)
         {
             DoDash();
         }
+        Debug.Log(_canMove);
         
     }
 
     private void DoDash()
     {
-        _canMove = false;
         Vector2 dashDirection = (_mouseWorldPosition - _currentFramePosition).normalized;
-        transform.position = Vector2.Lerp(_currentFramePosition, dashDirection * _dashLength, Time.deltaTime * _dashDuration);
+        Vector2 dashTarget = _currentFramePosition + dashDirection * _dashLength;
+
+        Coroutine dashAnimation = StartCoroutine(AnimateDash(dashTarget));
+        Coroutine startTimer = StartCoroutine(StartTimer());
+    }
+
+    IEnumerator AnimateDash(Vector2 target)
+    {
+        float elapsedTime = 0f;
+        while (Vector2.Distance(_currentFramePosition, target) > 0.1f)
+        {
+            _canMove = false;
+            elapsedTime += Time.deltaTime;
+            transform.position = Vector2.Lerp(_currentFramePosition, target, elapsedTime / _dashDuration);
+            yield return null;
+        }
+        transform.position = target;
         _canMove = true;
+    }
+    IEnumerator StartTimer()
+    {
+        _dashCount += 1;
+        while (true)
+        {
+            _timerCD += Time.deltaTime;
+            if (_timerCD >= _dashCD)
+            {
+                _dashCount = 0;
+                break;
+            }
+            yield return null;
+        }
     }
 
     void FixedUpdate()
     {
-        _horizontal = Input.GetAxisRaw("Horizontal");
-        _vertical = Input.GetAxisRaw("Vertical");
+        if (_canMove)
+        {
+            _horizontal = Input.GetAxisRaw("Horizontal");
+            _vertical = Input.GetAxisRaw("Vertical");
+        }
+        else
+        {
+            _horizontal = 0;
+            _vertical = 0;
+        }
+
 
         if (_horizontal != 0 && _vertical != 0) // Check for diagonal movement
         {
@@ -63,8 +108,8 @@ public class CharacterController : MonoBehaviour
             _vertical *= _moveLimiter;
         }
 
-        _currentFramePosition = transform.position;
-        _nextFramePosition = _currentFramePosition + new Vector2(_horizontal * _runSpeed, _vertical * _runSpeed);
+        
+
         if (_canMove)
         {
             _rigidBody.linearVelocity = new Vector2(_horizontal * _runSpeed, _vertical * _runSpeed);

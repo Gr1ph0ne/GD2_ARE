@@ -224,6 +224,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 315234bd5184b0d428013174cbadff93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _playerObject: {fileID: 622817596}
   _mainCursorObject: {fileID: 4197809909136324228, guid: 144bfcb79ba341a449190e34bc8c8dd3, type: 3}
   _secondCursorObject: {fileID: 4197809909136324228, guid: a41617cab5e0aac49be702268c64662e, type: 3}
 --- !u!1 &622817596 stripped
@@ -243,6 +244,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2327c4993b0137f418b60109dddb5849, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _dashLength: 5
+  _dashDuration: 5
+  _dashCD: 3
 --- !u!50 &622817598
 Rigidbody2D:
   serializedVersion: 5
